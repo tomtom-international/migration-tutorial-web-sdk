@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<title>My map</title>
+        <link rel='stylesheet' type='text/css' href='sdk/map.css'/>
+        <script src='sdk/tomtom.min.js'></script>
+        <style>
+          #map {
+              height: 720px;
+              width: 1280px;
+          }
+        </style>
+    </head>
+    <body>
+        <div id='map'></div>
+        <script>
+          var crossoverDrCoordinates = [37.769167, -122.478468];
+          var oceanBeachCoordinates = [37.768014, -122.510601];
+          var poloFieldCoordinates = [37.768454, -122.492544];
+
+          //map init
+          var map = tomtom.L.map('map', {
+              key: '<your-api-key>',
+              basePath: 'sdk',
+              center: crossoverDrCoordinates,
+              zoom: 15
+          });
+
+          //marker
+          var marker = tomtom.L.marker(poloFieldCoordinates).addTo(map);
+
+          //marker's pop-up
+          marker.bindPopup('Golden Gate Park Polo Field');
+
+          //routing
+          tomtom.routing()
+              .locations(oceanBeachCoordinates + ':' + crossoverDrCoordinates)
+              .go().then(function(routeJson) {
+                  var route = tomtom.L.geoJson(routeJson, {
+                      style: {color: '#00d7ff', opacity: 0.9, weight: 6}
+                  }).addTo(map);
+                  map.fitBounds(route.getBounds(), {padding: [5, 5]});
+              });
+
+          //start and end markers
+          tomtom.L.marker(crossoverDrCoordinates).addTo(map);
+          tomtom.L.marker(oceanBeachCoordinates).addTo(map);
+
+          //traffic
+          var trafficLayer = new tomtom.L.TomTomTrafficLayer();
+          map.addLayer(trafficLayer);
+          var trafficFlowLayer = new tomtom.L.TomTomTrafficFlowLayer();
+          map.addLayer(trafficFlowLayer);
+        </script>
+    </body>
+</html>
