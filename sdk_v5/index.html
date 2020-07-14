@@ -1,0 +1,87 @@
+<html>
+  <head>
+    <title>My map</title>
+    <meta charset="UTF-8"> 
+    <link rel="stylesheet" type="text/css" href="https://api.tomtom.com/maps-sdk-for-web/cdn/5.x/5.59.1/maps/maps.css" />
+    <script src='https://api.tomtom.com/maps-sdk-for-web/cdn/5.x/5.59.1/maps/maps-web.min.js'></script>
+    <script src='https://api.tomtom.com/maps-sdk-for-web/cdn/5.x/5.59.1/services/services-web.min.js'></script>
+    <style>
+      #map {
+        height: 800px;
+        width: 800px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      //map init
+      var map = tt.map({
+          container: "map",
+          style: 'tomtom://vector/1/basic-main',
+          key: "<your-api-key>"
+        });
+      map.addControl(new tt.FullscreenControl());
+      map.addControl(new tt.NavigationControl());
+
+      //traffic
+      var trafficLayerConfig = {
+        key: "<your-api-key>"
+      };
+      var trafficIncidentsConfig = {
+          key: "<your-api-key>"
+      };
+      map.on('load', function() {
+        map.addTier(new tt.TrafficFlowTilesTier(trafficLayerConfig));
+        map.addTier(new tt.TrafficIncidentTier(trafficIncidentsConfig));
+      });
+
+      //marker
+      var marker = new tt.Marker().setLngLat([-122.492544, 37.768454])
+      .addTo(map);
+      
+      marker.setPopup(new tt.Popup().setHTML("test"));
+      
+      //routing
+      tt.services.calculateRoute({
+            key: '<your-api-key>',
+            locations: '-122.510601,37.768014:-122.478468,37.769167'
+        })
+        .go()
+        .then(function(response) {
+            var geojson = response.toGeoJson();
+            map.addLayer({
+                'id': 'route',
+                'type': 'line',
+                'source': {
+                    'type': 'geojson',
+                    'data': geojson
+                },
+                'paint': {
+                    'line-color': '#00d7ff',
+                    'line-width': 8
+                }
+            });
+            var bounds = new tt.LngLatBounds();
+            geojson.features[0].geometry.coordinates.forEach(function(point) {
+                bounds.extend(tt.LngLat.convert(point));
+            });
+            map.fitBounds(bounds, {padding: 20});
+        });
+      new tt.Marker().setLngLat([-122.478468,37.769167]).addTo(map);
+      new tt.Marker().setLngLat([-122.510601,37.768014]).addTo(map);
+      
+      //search
+      tt.services.fuzzySearch({
+        key: '<your-api-key>',
+        query: 'Golden Gate Golf Course San Francisco'
+      })
+      .go()
+      .then(function(response) {
+        for (var i = 0; i < response.results.length; i++) {
+          new tt.Marker().setLngLat(response.results[i].position).addTo(map);
+        }
+      });
+    </script>
+  </body>
+</html>
